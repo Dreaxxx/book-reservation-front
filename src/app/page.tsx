@@ -19,6 +19,9 @@ export default function Home() {
 
   const [genreNames, setGenreNames] = useState<string>('');
 
+  const [resaBookId, setResaBookId] = useState('');
+  const [resaDueDate, setResaDueDate] = useState('');
+
   const loadBooks = async () => {
     setLoading(true);
 
@@ -55,9 +58,7 @@ export default function Home() {
     loadReservations();
   }, []);
 
-  const submitBook = async (e: React.FormEvent) => {
-    e.preventDefault();
-
+  const submitBook = async () => {
     await api.post('/books', {
       title,
       year: year === '' ? undefined : Number(year),
@@ -79,9 +80,7 @@ export default function Home() {
     await loadBooks();
   };
 
-  const submitAuthor = async (e: React.FormEvent) => {
-    e.preventDefault();
-
+  const submitAuthor = async () => {
     await api.post('/authors', {
       name: authorName,
     });
@@ -91,16 +90,10 @@ export default function Home() {
     await loadAuthors();
   };
 
-  const submitResa = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    const dueDate = (e.target as any).dueDate.value;
-
-    const bookId = Number((e.target as any).book.value);
-
+  const submitResa = async () => {
     await api.post('/reservations', {
-      bookId,
-      dueDate,
+      bookId: resaBookId,
+      dueDate: resaDueDate,
     });
 
     await loadReservations();
@@ -112,7 +105,10 @@ export default function Home() {
 
       <section style={{ marginTop: 24, marginBottom: 32 }}>
         <h2>Ajouter un livre</h2>
-        <form onSubmit={submitBook} style={{ display: 'grid', gap: 12, maxWidth: 480, marginTop: 8 }}>
+        <form
+          onSubmit={submitBook}
+          style={{ display: 'grid', gap: 12, maxWidth: 480, marginTop: 8 }}
+        >
           <input
             placeholder="Titre"
             value={title}
@@ -142,7 +138,10 @@ export default function Home() {
 
       <section style={{ marginTop: 24, marginBottom: 32 }}>
         <h2>Ajouter un auteur</h2>
-        <form onSubmit={submitAuthor} style={{ display: 'grid', gap: 12, maxWidth: 480, marginTop: 8 }}>
+        <form
+          onSubmit={submitAuthor}
+          style={{ display: 'grid', gap: 12, maxWidth: 480, marginTop: 8 }}
+        >
           <label style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 8 }}>
             Nom de l'auteur :{' '}
           </label>
@@ -162,7 +161,7 @@ export default function Home() {
           <label style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 8 }}>
             Livre :
           </label>
-          <select>
+          <select name="book" id="book" onChange={(e) => setResaBookId(e.target.value)} required>
             {books.map((b) => (
               <option key={b.id} value={b.id}>
                 {b.title}
@@ -174,10 +173,12 @@ export default function Home() {
           </label>
           <input
             required
-            id=""
+            id="dueDate"
+            name="dueDate"
             test-id="dueDate"
             placeholder="Date de retour souhaité"
             type="date"
+            onChange={(e) => setResaDueDate(e.target.value)}
           />
           <button type="submit">Créer</button>
         </form>
