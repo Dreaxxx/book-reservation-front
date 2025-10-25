@@ -1,5 +1,5 @@
 'use client';
 
 export default function Authors() {
-    return <h1>Authors</h1>;
+  return <h1>Authors</h1>;
 }
