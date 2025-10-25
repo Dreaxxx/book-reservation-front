@@ -40,7 +40,6 @@ export default function AuthPage() {
         localStorage.setItem('token', token);
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
         setMsg('Connecté ✅');
-        router.refresh();
         router.push('/');
       } else {
         await register(email, password, name);
@@ -101,7 +100,7 @@ export default function AuthPage() {
                 data-testid="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="John Doe"
+                placeholder="Johnny Doe"
               />
             </div>
           )}
@@ -116,7 +115,7 @@ export default function AuthPage() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="john@exemple.com"
+              placeholder="johnny@exemple.com"
               required
             />
           </div>
