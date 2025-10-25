@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { api } from './api/api';
 import { Author, Book, Reservation } from './lib/types';
+import { booksApi, authorsApi, reservationsApi } from './api/api';
 
 export default function Home() {
   const [books, setBooks] = useState<Book[]>([]);
@@ -25,9 +25,9 @@ export default function Home() {
   const loadBooks = async () => {
     setLoading(true);
 
-    const bookRes = await api.get<Book[]>('/books');
+    const bookRes = (await booksApi.list()).data;
 
-    setBooks(bookRes.data);
+    setBooks(bookRes);
 
     setLoading(false);
   };
@@ -35,9 +35,9 @@ export default function Home() {
   const loadAuthors = async () => {
     setLoading(true);
 
-    const authorRes = await api.get<Author[]>('/authors');
+    const authorRes = (await authorsApi.list()).data;
 
-    setAuthors(authorRes.data);
+    setAuthors(authorRes);
 
     setLoading(false);
   };
@@ -45,9 +45,9 @@ export default function Home() {
   const loadReservations = async () => {
     setLoading(true);
 
-    const resaRes = await api.get<Reservation[]>('/reservations');
+    const resaRes = (await reservationsApi.list()).data;
 
-    setReservations(resaRes.data);
+    setReservations(resaRes);
 
     setLoading(false);
   };
@@ -59,7 +59,7 @@ export default function Home() {
   }, []);
 
   const submitBook = async () => {
-    await api.post('/books', {
+    await booksApi.create({
       title,
       year: year === '' ? undefined : Number(year),
       authorNames: authorNames
@@ -81,7 +81,7 @@ export default function Home() {
   };
 
   const submitAuthor = async () => {
-    await api.post('/authors', {
+    await authorsApi.create({
       name: authorName,
     });
 
@@ -91,7 +91,7 @@ export default function Home() {
   };
 
   const submitResa = async () => {
-    await api.post('/reservations', {
+    await reservationsApi.create({
       bookId: resaBookId,
       dueDate: resaDueDate,
     });
@@ -147,7 +147,7 @@ export default function Home() {
           </label>
           <input
             placeholder="Nom et prénom"
-            value={title}
+            value={authorName}
             onChange={(e) => setAuthorName(e.target.value)}
             required
           />
