@@ -36,10 +36,11 @@ export default function AuthPage() {
         console.log('res', res);
 
         const token = res.data?.accessToken;
-        if (!token) throw new Error('Jeton manquant dans la réponse.');
+        if (!token) throw new Error('Token manquant dans la réponse.');
         localStorage.setItem('token', token);
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
         setMsg('Connecté ✅');
+        router.refresh();
         router.push('/');
       } else {
         await register(email, password, name);
