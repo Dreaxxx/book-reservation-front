@@ -29,9 +29,10 @@ export default function AuthPage() {
     setSuccessMsg(null);
 
     if (mode === 'register') {
-      if (!email.trim()) return setError('L\'email est requis.');
+      if (!email.trim()) return setError("L'email est requis.");
       if (password !== confirm) return setError('Les mots de passe ne correspondent pas.');
-      if (password.length < 6) return setError('Le mot de passe doit contenir au moins 6 caractères.');
+      if (password.length < 6)
+        return setError('Le mot de passe doit contenir au moins 6 caractères.');
       if (!name.trim()) return setError('Le nom est requis.');
     }
 
@@ -54,7 +55,7 @@ export default function AuthPage() {
       }
     } catch (error) {
       console.error('Auth error : ', error);
-      setError(error, mode === 'login' ? 'Erreur de connexion' : 'Erreur lors de l\'inscription');
+      setError(error, mode === 'login' ? 'Erreur de connexion' : "Erreur lors de l'inscription");
     } finally {
       setLoading(false);
     }
@@ -162,12 +163,8 @@ export default function AuthPage() {
               {loading ? 'Patientez…' : mode === 'login' ? 'Se connecter' : 'Créer mon compte'}
             </button>
 
-            {errorMsg && (
-              <ErrorDiv message={errorMsg} />
-            )}
-            {successMsg && (
-              <SuccessDiv message={successMsg} />
-            )}
+            {errorMsg && <ErrorDiv message={errorMsg} />}
+            {successMsg && <SuccessDiv message={successMsg} />}
           </div>
         </form>
       </div>

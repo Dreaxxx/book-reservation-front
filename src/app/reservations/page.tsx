@@ -190,7 +190,6 @@ export default function ReservationsPage() {
         <div style={{ marginTop: 8, fontSize: 12, color: '#555' }}>
           (La date d'emprunt sera automatiquement définie au jour de la réservation)
         </div>
-
       </section>
 
       <h2>Liste des réservations en cours</h2>
@@ -242,12 +241,8 @@ export default function ReservationsPage() {
           ))}
         </ul>
       )}
-      {errorMsg && (
-        <ErrorDiv message={errorMsg} />
-      )}
-      {successMsg && (
-        <SuccessDiv message={successMsg} />
-      )}
+      {errorMsg && <ErrorDiv message={errorMsg} />}
+      {successMsg && <SuccessDiv message={successMsg} />}
     </main>
   );
 }

@@ -97,3 +97,9 @@ export type SearchBookResponse = {
 
 export type CustomCfgConfig = { config: { retryCount?: number; startedAt?: number } };
 export type ErrorResponseData = { message?: string; error?: string };
+export type UnknowErrorType = {
+  message: string | string[] | null;
+  error: string | null;
+  detail: string | null;
+  title: string | null;
+};

@@ -56,8 +56,7 @@ export default function BooksPage() {
     } catch (error) {
       console.error('Error loading books : ', error);
       setError(error, 'Erreur lors du chargement des livres');
-    }
-    finally {
+    } finally {
       setLoading(false);
     }
   };
@@ -147,8 +146,7 @@ export default function BooksPage() {
       cancelEdit();
       await loadBooks();
       setSuccessMsg('Livre mis à jour avec succès.');
-    }
-    catch (error) {
+    } catch (error) {
       console.error('Error updating book : ', error);
       setError(error, 'Erreur lors de la mise à jour du livre');
     }
@@ -180,7 +178,7 @@ export default function BooksPage() {
 
   const createFromPublic = async (book: GoogleBook) => {
     if (!confirm('Importer ce livre ?')) return;
-    
+
     clearError();
 
     try {
@@ -209,7 +207,7 @@ export default function BooksPage() {
           gridTemplateColumns: '1fr 1fr 1fr auto',
           maxWidth: 860,
           marginBottom: 16,
-          marginTop: 8
+          marginTop: 8,
         }}
       >
         <input
@@ -334,12 +332,8 @@ export default function BooksPage() {
           />
           <button type="submit">Créer</button>
         </form>
-        {errorMsg && (
-          <ErrorDiv message={errorMsg} />
-        )}
-        {successMsg && (
-          <SuccessDiv message={successMsg} />
-        )}
+        {errorMsg && <ErrorDiv message={errorMsg} />}
+        {successMsg && <SuccessDiv message={successMsg} />}
       </section>
 
       <h2>Liste de nos livres disponibles</h2>

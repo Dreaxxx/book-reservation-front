@@ -48,10 +48,9 @@ export default function AuthorsPage() {
       setSuccessMsg('Auteur créé avec succès.');
     } catch (error) {
       console.error('Error creating author : ', error);
-      setError(error, 'Erreur lors de la création de l\'auteur');
+      setError(error, "Erreur lors de la création de l'auteur");
     }
-  }
-
+  };
 
   const startEdit = (author: Author) => {
     setEditId(author.id);
@@ -72,7 +71,7 @@ export default function AuthorsPage() {
       setSuccessMsg('Auteur mis à jour avec succès.');
     } catch (error) {
       console.error('Error updating author : ', error);
-      setError(error, 'Erreur lors de la mise à jour de l\'auteur');
+      setError(error, "Erreur lors de la mise à jour de l'auteur");
     }
   };
   const deleteAuthor = async (id: string) => {
@@ -85,7 +84,7 @@ export default function AuthorsPage() {
       setSuccessMsg('Auteur supprimé avec succès.');
     } catch (error) {
       console.error('Error deleting author : ', error);
-      setError(error, 'Erreur lors de la suppression de l\'auteur');
+      setError(error, "Erreur lors de la suppression de l'auteur");
     }
   };
 
@@ -148,12 +147,8 @@ export default function AuthorsPage() {
           ))}
         </ul>
       )}
-      {errorMsg && (
-        <ErrorDiv message={errorMsg} />
-      )}
-      {successMsg && (
-        <SuccessDiv message={successMsg} />
-      )}
+      {errorMsg && <ErrorDiv message={errorMsg} />}
+      {successMsg && <SuccessDiv message={successMsg} />}
     </main>
   );
 }
