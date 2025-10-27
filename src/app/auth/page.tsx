@@ -2,8 +2,11 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import axios, { AxiosError } from 'axios';
+import axios from 'axios';
 import { authApi } from '../api/api';
+import { useErrorMessage } from '../hooks/useErrorMessage';
+import { ErrorDiv } from '@/components/ErrorDiv';
+import { SuccessDiv } from '@/components/SuccessDiv';
 
 type Mode = 'login' | 'register';
 
@@ -15,18 +18,21 @@ export default function AuthPage() {
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [loading, setLoading] = useState(false);
-  const [msg, setMsg] = useState<string | null>(null);
-  const [err, setErr] = useState<string | null>(null);
+
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
+
+  const { errorMsg, setError, clearError } = useErrorMessage();
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setErr(null);
-    setMsg(null);
+    clearError();
+    setSuccessMsg(null);
 
     if (mode === 'register') {
-      if (!name.trim()) return setErr('Le nom est requis.');
-      if (password.length < 6) return setErr('Mot de passe trop court (min 6).');
-      if (password !== confirm) return setErr('Les mots de passe ne correspondent pas.');
+      if (!email.trim()) return setError('L\'email est requis.');
+      if (password !== confirm) return setError('Les mots de passe ne correspondent pas.');
+      if (password.length < 6) return setError('Le mot de passe doit contenir au moins 6 caractères.');
+      if (!name.trim()) return setError('Le nom est requis.');
     }
 
     setLoading(true);
@@ -39,23 +45,16 @@ export default function AuthPage() {
         if (!token) throw new Error('Token manquant dans la réponse.');
         localStorage.setItem('token', token);
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        setMsg('Connecté ✅');
+        setSuccessMsg('Connecté ✅');
         router.push('/');
       } else {
         await authApi.register({ name, email, password });
-        setMsg('Compte créé ✅ Vous pouvez vous connecter.');
+        setSuccessMsg('Compte créé ✅ Vous pouvez vous connecter.');
         setMode('login');
       }
-    } catch (e: unknown) {
-      console.error('Auth error : ', e);
-      if (e instanceof AxiosError) {
-        const apiMsg = e.response?.data?.message || e.message;
-        setErr(`Erreur : ${apiMsg}`);
-      } else if (e instanceof Error) {
-        setErr(`Erreur : ${e.message}`);
-      } else {
-        setErr('Une erreur inconnue est survenue.');
-      }
+    } catch (error) {
+      console.error('Auth error : ', error);
+      setError(error, mode === 'login' ? 'Erreur de connexion' : 'Erreur lors de l\'inscription');
     } finally {
       setLoading(false);
     }
@@ -163,8 +162,12 @@ export default function AuthPage() {
               {loading ? 'Patientez…' : mode === 'login' ? 'Se connecter' : 'Créer mon compte'}
             </button>
 
-            {msg && <span style={{ marginLeft: 12 }}>✅ {msg}</span>}
-            {err && <span style={{ marginLeft: 12 }}>❌ {err}</span>}
+            {errorMsg && (
+              <ErrorDiv message={errorMsg} />
+            )}
+            {successMsg && (
+              <SuccessDiv message={successMsg} />
+            )}
           </div>
         </form>
       </div>

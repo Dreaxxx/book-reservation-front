@@ -4,6 +4,9 @@ import { useEffect, useMemo, useState } from 'react';
 import type { Book, Reservation } from '../lib/types';
 import { booksApi, reservationsApi } from '../api/api';
 import { useAuth } from '../hooks/useAuth';
+import { useErrorMessage } from '../hooks/useErrorMessage';
+import { SuccessDiv } from '@/components/SuccessDiv';
+import { ErrorDiv } from '@/components/ErrorDiv';
 
 function formatDateISO(d: string | Date) {
   try {
@@ -26,11 +29,12 @@ export default function ReservationsPage() {
   const [editDueDate, setEditDueDate] = useState('');
 
   const [searchQueryBook, setSearchQueryBook] = useState('');
-  const [errorMsg, setErrorMsg] = useState('');
+  const { errorMsg, setError, clearError } = useErrorMessage();
   const [successMsg, setSuccessMsg] = useState('');
 
   const loadAll = async () => {
     setLoading(true);
+    clearError();
 
     try {
       const [booksData, reservationsData] = await Promise.all([
@@ -46,7 +50,7 @@ export default function ReservationsPage() {
       console.log('token : ', token);
     } catch (error) {
       console.error('Error loading data : ', error);
-      setErrorMsg('Erreur lors du chargement des données : ' + String(error));
+      setError(error, 'Erreur lors du chargement des données');
       setLoading(false);
     }
   };
@@ -67,6 +71,10 @@ export default function ReservationsPage() {
 
   const submitResa = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!resaBookId || !resaDueDate) return;
+
+    clearError();
+
     try {
       const res = await reservationsApi.create({
         bookId: resaBookId,
@@ -78,7 +86,7 @@ export default function ReservationsPage() {
       setResaDueDate('');
     } catch (error) {
       console.error('Error creating reservation : ', error);
-      setErrorMsg('Erreur lors de la création de la réservation : ' + String(error));
+      setError(error, 'Erreur lors de la création de la réservation');
       return;
     }
 
@@ -95,6 +103,8 @@ export default function ReservationsPage() {
   };
   const saveEdit = async () => {
     if (!editId) return;
+    clearError();
+
     try {
       await reservationsApi.update(editId, { dueDate: editDueDate });
       cancelEdit();
@@ -102,11 +112,12 @@ export default function ReservationsPage() {
       setSuccessMsg('Réservation mise à jour avec succès.');
     } catch (error) {
       console.error('Error updating reservation : ', error);
-      setErrorMsg('Erreur lors de la mise à jour de la réservation : ' + String(error));
+      setError(error, 'Erreur lors de la mise à jour de la réservation');
     }
   };
   const deleteResa = async (id: string) => {
     if (!confirm('Êtes-vous certain de vouloir retourner ce livre ?')) return;
+    clearError();
 
     try {
       await reservationsApi.remove(id);
@@ -114,7 +125,7 @@ export default function ReservationsPage() {
       setSuccessMsg('Réservation supprimée avec succès.');
     } catch (error) {
       console.error('Error deleting reservation : ', error);
-      setErrorMsg('Erreur lors de la suppression de la réservation : ' + String(error));
+      setError(error, 'Erreur lors de la suppression de la réservation');
     }
   };
 
@@ -232,14 +243,10 @@ export default function ReservationsPage() {
         </ul>
       )}
       {errorMsg && (
-        <div style={{ marginTop: 16, color: 'red' }}>
-          <strong>Une erreur s'est produite :</strong> {errorMsg}
-        </div>
+        <ErrorDiv message={errorMsg} />
       )}
       {successMsg && (
-        <div style={{ marginTop: 16, color: 'green' }}>
-          <strong>Succès :</strong> {successMsg}
-        </div>
+        <SuccessDiv message={successMsg} />
       )}
     </main>
   );

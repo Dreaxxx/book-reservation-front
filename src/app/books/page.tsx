@@ -5,6 +5,9 @@ import type { Author, Book, GoogleBook } from '../lib/types';
 import { booksApi } from '../api/api';
 import { searchBooksByTitleGoogle } from '../api/book-public-api';
 import { useDebounce } from 'use-debounce';
+import { useErrorMessage } from '../hooks/useErrorMessage';
+import { ErrorDiv } from '@/components/ErrorDiv';
+import { SuccessDiv } from '@/components/SuccessDiv';
 
 export default function BooksPage() {
   const [books, setBooks] = useState<Book[]>([]);
@@ -29,13 +32,15 @@ export default function BooksPage() {
   const [extLoading, setExtLoading] = useState(false);
   const [extResults, setExtResults] = useState<GoogleBook[]>([]);
 
-  const [errorMsg, setErrorMsg] = useState('');
+  const { errorMsg, setError, clearError } = useErrorMessage();
   const [successMsg, setSuccessMsg] = useState('');
 
   const [debouncedQuery] = useDebounce(extQuery, 300);
 
   const loadBooks = async (params?: { searchQuery?: string; author?: string; genre?: string }) => {
     setLoading(true);
+    clearError();
+
     try {
       if (params && (params.searchQuery || params.author || params.genre)) {
         const res = await booksApi.search({
@@ -50,7 +55,7 @@ export default function BooksPage() {
       }
     } catch (error) {
       console.error('Error loading books : ', error);
-      setErrorMsg('Erreur lors du chargement des livres : ' + String(error));
+      setError(error, 'Erreur lors du chargement des livres');
     }
     finally {
       setLoading(false);
@@ -79,6 +84,7 @@ export default function BooksPage() {
 
   const submitBook = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
+    clearError();
 
     try {
       await booksApi.create({
@@ -101,7 +107,7 @@ export default function BooksPage() {
       setSuccessMsg('Livre créé avec succès.');
     } catch (error) {
       console.error('Error creating book : ', error);
-      setErrorMsg('Erreur lors de la création du livre : ' + String(error));
+      setError(error, 'Erreur lors de la création du livre');
     }
   };
 
@@ -123,6 +129,7 @@ export default function BooksPage() {
 
   const saveEdit = async () => {
     if (!editId) return;
+    clearError();
 
     try {
       await booksApi.update(editId, {
@@ -143,19 +150,20 @@ export default function BooksPage() {
     }
     catch (error) {
       console.error('Error updating book : ', error);
-      setErrorMsg('Erreur lors de la mise à jour du livre : ' + String(error));
+      setError(error, 'Erreur lors de la mise à jour du livre');
     }
   };
 
   const deleteBook = async (id: string) => {
     if (!confirm('Supprimer ce livre ?')) return;
+    clearError();
 
     try {
       await booksApi.remove(id);
       await loadBooks();
     } catch (error) {
       console.error('Error deleting book : ', error);
-      setErrorMsg('Erreur lors de la suppression du livre : ' + String(error));
+      setError(error, 'Erreur lors de la suppression du livre');
     }
   };
 
@@ -171,6 +179,10 @@ export default function BooksPage() {
   };
 
   const createFromPublic = async (book: GoogleBook) => {
+    if (!confirm('Importer ce livre ?')) return;
+    
+    clearError();
+
     try {
       await booksApi.create({
         title: book.title,
@@ -182,7 +194,7 @@ export default function BooksPage() {
       setSuccessMsg('Livre importé et créé avec succès.');
     } catch (error) {
       console.error('Error creating book : ', error);
-      setErrorMsg('Erreur lors de la création du livre : ' + String(error));
+      setError(error, 'Erreur lors de la création du livre');
     }
   };
 
@@ -322,8 +334,12 @@ export default function BooksPage() {
           />
           <button type="submit">Créer</button>
         </form>
-        {errorMsg && <p style={{ color: 'red', marginTop: 16 }}>{errorMsg}</p>}
-        {successMsg && <p style={{ color: 'green', marginTop: 16 }}>{successMsg}</p>}
+        {errorMsg && (
+          <ErrorDiv message={errorMsg} />
+        )}
+        {successMsg && (
+          <SuccessDiv message={successMsg} />
+        )}
       </section>
 
       <h2>Liste de nos livres disponibles</h2>
