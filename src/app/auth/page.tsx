@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import axios, { AxiosError } from 'axios';
-import { login, register } from '../lib/auth';
+import { authApi } from '../api/api';
 
 type Mode = 'login' | 'register';
 
@@ -32,17 +32,17 @@ export default function AuthPage() {
     setLoading(true);
     try {
       if (mode === 'login') {
-        const res = await login(email, password);
+        const res = await authApi.login(email, password);
         console.log('res', res);
 
-        const token = res.data?.accessToken;
+        const token = res?.accessToken;
         if (!token) throw new Error('Token manquant dans la réponse.');
         localStorage.setItem('token', token);
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
         setMsg('Connecté ✅');
         router.push('/');
       } else {
-        await register(email, password, name);
+        await authApi.register(email, password, name);
         setMsg('Compte créé ✅ Vous pouvez vous connecter.');
         setMode('login');
       }

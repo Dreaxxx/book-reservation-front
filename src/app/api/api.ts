@@ -1,5 +1,25 @@
+import { persistAuth } from '../lib/auth';
 import { http } from '../lib/central';
-import type { Author, Book, Reservation } from '../lib/types';
+import type { Author, AuthResponse, Book, Reservation } from '../lib/types';
+
+export const authApi = {
+  login: async (email: string, password: string): Promise<AuthResponse> => {
+    const res = await http.post<AuthResponse>('/auth/login', { email, password });
+    const data = res.data;
+
+    persistAuth(data);
+
+    return data;
+  },
+  register: async (email: string, password: string, name: string): Promise<AuthResponse> => {
+    const res = await http.post<AuthResponse>('/auth/signup', { email, password, name });
+    const data = res.data;
+
+    persistAuth(data);
+
+    return data;
+  },
+};
 
 export const booksApi = {
   list: () => http.get<Book[]>('/books'),

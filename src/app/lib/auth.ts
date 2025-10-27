@@ -1,22 +1,15 @@
 import axios from 'axios';
-import { http, setAuthToken } from './central';
+import { setAuthToken } from './central';
+import { AuthResponse } from './types';
 
-export async function login(email: string, password: string) {
-  const { data } = await http.post('/auth/login', { email, password });
+export function persistAuth(data: AuthResponse) {
   setAuthToken(data.accessToken);
-  localStorage.setItem('token', data.accessToken);
-  return data.user;
+  localStorage.setItem('user', JSON.stringify(data.user));
 }
 
-export async function register(email: string, password: string, name?: string) {
-  const { data } = await http.post('/auth/signup', { email, password, name });
-  setAuthToken(data.accessToken);
-  localStorage.setItem('token', data.accessToken);
-  return data.user;
-}
 
 export function logout() {
-  localStorage.removeItem('token');
+  localStorage.removeItem('user');
   setAuthToken(undefined);
 }
 

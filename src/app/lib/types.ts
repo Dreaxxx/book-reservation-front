@@ -2,6 +2,22 @@ export type Borrower = { id: string; name: string; email: string };
 export type Author = { id: string; name: string };
 export type Genre = string;
 
+export type AuthUser = {
+  id: string;
+  email: string;
+  name: string;
+};
+
+export type AuthContextValue = {
+  user: AuthUser | null;
+  token: string | null;
+  loading: boolean;
+  login: (email: string, password: string) => Promise<void>;
+  register: (name: string, email: string, password: string) => Promise<void>;
+};
+
+export type AuthResponse = { accessToken: string; user: AuthUser };
+
 export type Book = {
   id: string;
   title: string;

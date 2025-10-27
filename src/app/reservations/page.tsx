@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { Book, Reservation } from '../lib/types';
 import { booksApi, reservationsApi } from '../api/api';
+import { useAuth } from '../hooks/useAuth';
 
 function formatDateISO(d: string | Date) {
   try {
@@ -12,8 +13,8 @@ function formatDateISO(d: string | Date) {
     return String(d);
   }
 }
-
 export default function ReservationsPage() {
+  const { user, token } = useAuth();
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(true);
@@ -35,12 +36,15 @@ export default function ReservationsPage() {
     setBooks(booksData.data);
     setReservations(reservationsData.data);
     setLoading(false);
+
+    console.log('user : ', user);
+    console.log('token : ', token);
   };
 
   const filteredReservations = useMemo(() => {
     const seacrhQuery = searchQueryBook.trim().toLowerCase();
     if (!seacrhQuery) return reservations;
-    return reservations.filter((resa) => resa.book.title.toLowerCase().includes(seacrhQuery));
+    return reservations.filter((resa) => resa.book.title.toLowerCase().includes(seacrhQuery) || resa.reservedBy?.name.toLowerCase().includes(seacrhQuery));
   }, [searchQueryBook, reservations]);
 
   useEffect(() => {
@@ -73,7 +77,7 @@ export default function ReservationsPage() {
     await loadAll();
   };
   const deleteResa = async (id: string) => {
-    if (!confirm('Annuler/supprimer cette réservation ?')) return;
+    if (!confirm('Êtes-vous certain de vouloir retourner ce livre ?')) return;
     await reservationsApi.remove(id);
     await loadAll();
   };
@@ -93,7 +97,7 @@ export default function ReservationsPage() {
         }}
       >
         <input
-          placeholder="Rechercher par nom de livre"
+          placeholder="Rechercher par nom de livre ou emprunteur"
           value={searchQueryBook}
           onChange={(e) => setSearchQueryBook(e.target.value)}
         />
@@ -171,14 +175,17 @@ export default function ReservationsPage() {
                   <div>Date d'emprunt : {formatDateISO(reservation.reservedAt)}</div>
                   <div>Date de retour : {formatDateISO(reservation.dueDate)}</div>
                   <div>Personne : {reservation.reservedBy?.name ?? '—'}</div>
-                  <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-                    <button type="button" onClick={() => startEdit(reservation)}>
-                      Modifier
-                    </button>
-                    <button type="button" onClick={() => deleteResa(reservation.id)}>
-                      Supprimer
-                    </button>
-                  </div>
+                  {
+                    reservation.reservedBy?.id === user?.id &&
+                    <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                      <button type="button" onClick={() => startEdit(reservation)}>
+                        Changer la date de retour
+                      </button>
+                      <button type="button" onClick={() => deleteResa(reservation.id)}>
+                        Retourner le livre
+                      </button>
+                    </div>
+                  }
                 </>
               )}
             </li>
