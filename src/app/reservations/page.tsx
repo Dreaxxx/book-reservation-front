@@ -44,7 +44,11 @@ export default function ReservationsPage() {
   const filteredReservations = useMemo(() => {
     const seacrhQuery = searchQueryBook.trim().toLowerCase();
     if (!seacrhQuery) return reservations;
-    return reservations.filter((resa) => resa.book.title.toLowerCase().includes(seacrhQuery) || resa.reservedBy?.name.toLowerCase().includes(seacrhQuery));
+    return reservations.filter(
+      (resa) =>
+        resa.book.title.toLowerCase().includes(seacrhQuery) ||
+        resa.reservedBy?.name.toLowerCase().includes(seacrhQuery),
+    );
   }, [searchQueryBook, reservations]);
 
   useEffect(() => {
@@ -175,8 +179,7 @@ export default function ReservationsPage() {
                   <div>Date d'emprunt : {formatDateISO(reservation.reservedAt)}</div>
                   <div>Date de retour : {formatDateISO(reservation.dueDate)}</div>
                   <div>Personne : {reservation.reservedBy?.name ?? '—'}</div>
-                  {
-                    reservation.reservedBy?.id === user?.id &&
+                  {reservation.reservedBy?.id === user?.id && (
                     <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
                       <button type="button" onClick={() => startEdit(reservation)}>
                         Changer la date de retour
@@ -185,7 +188,7 @@ export default function ReservationsPage() {
                         Retourner le livre
                       </button>
                     </div>
-                  }
+                  )}
                 </>
               )}
             </li>

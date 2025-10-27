@@ -7,7 +7,6 @@ export function persistAuth(data: AuthResponse) {
   localStorage.setItem('user', JSON.stringify(data.user));
 }
 
-
 export function logout() {
   localStorage.removeItem('user');
   setAuthToken(undefined);
