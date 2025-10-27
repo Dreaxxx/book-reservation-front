@@ -1,18 +1,18 @@
 import { persistAuth } from '../lib/auth';
 import { http } from '../lib/central';
-import type { Author, AuthResponse, Book, Reservation } from '../lib/types';
+import type { Author, AuthResponse, Book, CreateAuthorPayload, CreateBookPayload, CreateReservationPayload, LoginPayload, RegisterPayload, Reservation } from '../lib/types';
 
 export const authApi = {
-  login: async (email: string, password: string): Promise<AuthResponse> => {
-    const res = await http.post<AuthResponse>('/auth/login', { email, password });
+  login: async (payload: LoginPayload): Promise<AuthResponse> => {
+    const res = await http.post<AuthResponse>('/auth/login', payload);
     const data = res.data;
 
     persistAuth(data);
 
     return data;
   },
-  register: async (email: string, password: string, name: string): Promise<AuthResponse> => {
-    const res = await http.post<AuthResponse>('/auth/signup', { email, password, name });
+  register: async (payload: RegisterPayload): Promise<AuthResponse> => {
+    const res = await http.post<AuthResponse>('/auth/signup', payload);
     const data = res.data;
 
     persistAuth(data);
@@ -32,30 +32,25 @@ export const booksApi = {
         genre: params.genre,
       },
     }),
-  create: (payload: {
-    title: string;
-    year?: string;
-    authorNames: string[];
-    genreNames: string[];
-  }) => http.post<Book>('/books', payload),
-  update: (id: string, patch: Partial<Book>) => http.patch<Book>(`/books/${id}`, patch),
+  create: (payload: CreateBookPayload) => http.post<Book>('/books', payload),
+  update: (id: string, patchPayload: Partial<CreateBookPayload>) => http.patch<Book>(`/books/${id}`, patchPayload),
   remove: (id: string) => http.delete<void>(`/books/${id}`),
 };
 
 export const authorsApi = {
   list: () => http.get<Author[]>('/authors'),
   get: (id: string) => http.get<Author>(`/authors/${id}`),
-  create: (payload: { name: string }) => http.post<Author>('/authors', payload),
-  update: (id: string, patch: Partial<Author>) => http.patch<Author>(`/authors/${id}`, patch),
+  create: (payload: CreateAuthorPayload) => http.post<Author>('/authors', payload),
+  update: (id: string, patchPayload: Partial<CreateAuthorPayload>) => http.patch<Author>(`/authors/${id}`, patchPayload),
   remove: (id: string) => http.delete<void>(`/authors/${id}`),
 };
 
 export const reservationsApi = {
   list: () => http.get<Reservation[]>('/reservations'),
   get: (id: string) => http.get<Reservation>(`/reservations/${id}`),
-  create: (payload: { bookId: string; dueDate: string }) =>
+  create: (payload: CreateReservationPayload) =>
     http.post<Reservation>('/reservations', payload),
-  update: (id: string, patch: Partial<Reservation>) =>
-    http.patch<Reservation>(`/reservations/${id}`, patch),
+  update: (id: string, patchPayload: Partial<CreateReservationPayload>) =>
+    http.patch<Reservation>(`/reservations/${id}`, patchPayload),
   remove: (id: string) => http.delete<void>(`/reservations/${id}`),
 };

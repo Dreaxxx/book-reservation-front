@@ -32,7 +32,7 @@ export default function AuthPage() {
     setLoading(true);
     try {
       if (mode === 'login') {
-        const res = await authApi.login(email, password);
+        const res = await authApi.login({ email, password });
         console.log('res', res);
 
         const token = res?.accessToken;
@@ -42,7 +42,7 @@ export default function AuthPage() {
         setMsg('Connecté ✅');
         router.push('/');
       } else {
-        await authApi.register(email, password, name);
+        await authApi.register({ name, email, password });
         setMsg('Compte créé ✅ Vous pouvez vous connecter.');
         setMode('login');
       }

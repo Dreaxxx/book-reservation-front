@@ -25,6 +25,14 @@ export type Book = {
   authors: Author[];
   genres: Genre[];
 };
+
+export type CreateBookPayload = {
+  title: string;
+  year?: string | null;
+  authorNames: string[];
+  genreNames: string[];
+};
+
 export type Reservation = {
   id: string;
   book: Book;
@@ -33,11 +41,27 @@ export type Reservation = {
   dueDate: string;
 };
 
-export type CreateBookPayload = {
+export type GoogleBook = {
+  id?: string;
+  provider: 'google';
+  providerId: string;
   title: string;
-  year?: number | null;
-  authorIds: number[];
-  genres: Genre[];
+  authors: string[];
+  year?: number;
+  genres: string[];
+  thumbnail?: string;
+  description?: string;
+  volumeInfo?: {
+    title?: string;
+    authors?: string[];
+    publishedDate?: string;
+    categories?: string[];
+    imageLinks?: {
+      thumbnail?: string;
+      smallThumbnail?: string;
+    };
+    description?: string;
+  };
 };
 
 export type CreateReservationPayload = {
@@ -54,14 +78,6 @@ export type RegisterPayload = {
   name: string;
   email: string;
   password: string;
-};
-
-export type UpdateBookPayload = {
-  id: string;
-  title: string;
-  year?: number | null;
-  authorIds: number[];
-  genres: Genre[];
 };
 
 export type UpdateReservationPayload = {

@@ -1,8 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import type { Author, Book } from '../lib/types';
+import { useEffect, useRef, useState } from 'react';
+import type { Author, Book, GoogleBook } from '../lib/types';
 import { booksApi } from '../api/api';
+import { searchBooksByTitleGoogle } from '../api/book-public-api';
+import { useDebounce } from 'use-debounce';
 
 export default function BooksPage() {
   const [books, setBooks] = useState<Book[]>([]);
@@ -16,17 +18,28 @@ export default function BooksPage() {
   const [editId, setEditId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
   const [editYear, setEditYear] = useState<string | ''>('');
+  const [editAuthorNames, setEditAuthorNames] = useState<string>('');
+  const [editGenreNames, setEditGenreNames] = useState<string>('');
 
   const [searchQuery, setSearchQuery] = useState('');
   const [author, setAuthor] = useState('');
   const [genre, setGenre] = useState('');
 
+  const [extQuery, setExtQuery] = useState('');
+  const [extLoading, setExtLoading] = useState(false);
+  const [extResults, setExtResults] = useState<GoogleBook[]>([]);
+
+  const [debouncedQuery] = useDebounce(extQuery, 300);
+
   const loadBooks = async (params?: { searchQuery?: string; author?: string; genre?: string }) => {
     setLoading(true);
     try {
       if (params && (params.searchQuery || params.author || params.genre)) {
-        const res = await booksApi.search(params);
-        console.log('res', res.data.items);
+        const res = await booksApi.search({
+          searchQuery: params.searchQuery,
+          author: params.author,
+          genre: params.genre,
+        });
         setBooks(res.data.items ?? res.data);
       } else {
         const bookRes = (await booksApi.list()).data;
@@ -41,7 +54,25 @@ export default function BooksPage() {
     loadBooks();
   }, []);
 
-  const submitBook = async () => {
+  useEffect(() => {
+    const debouncedQueryTRimed = debouncedQuery.trim();
+
+    if (!debouncedQueryTRimed) {
+      setExtResults([]);
+      return;
+    }
+
+    setExtLoading(true);
+
+    searchBooksByTitleGoogle(debouncedQueryTRimed, 8)
+      .then(setExtResults)
+      .catch(() => setExtResults([]))
+      .finally(() => setExtLoading(false));
+
+  }, [debouncedQuery]);
+
+  const submitBook = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     await booksApi.create({
       title,
       year: year === '' ? undefined : year,
@@ -65,12 +96,20 @@ export default function BooksPage() {
     setEditId(book.id);
     setEditTitle(book.title);
     setEditYear(book.year?.toString() ?? '');
+    setEditAuthorNames(book.authors.map((a: Author) => a.name).join(', '));
+    setEditGenreNames(
+      book.genres
+        .map((g) => (typeof g === 'string' ? g : (g as any).name))
+        .join(', '),
+    );
   };
 
   const cancelEdit = () => {
     setEditId(null);
     setEditTitle('');
     setEditYear('');
+    setEditAuthorNames('');
+    setEditGenreNames('');
   };
 
   const saveEdit = async () => {
@@ -78,6 +117,14 @@ export default function BooksPage() {
     await booksApi.update(editId, {
       title: editTitle,
       year: editYear === '' ? undefined : editYear,
+      authorNames: editAuthorNames
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean),
+      genreNames: editGenreNames
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean),
     });
     cancelEdit();
     await loadBooks();
@@ -91,6 +138,23 @@ export default function BooksPage() {
 
   const handleSearch = async () => {
     await loadBooks({ searchQuery, author, genre });
+  };
+
+  const importFromPublic = (book: GoogleBook) => {
+    setTitle(book.title);
+    setYear(book.year ? String(book.year) : '');
+    setAuthorNames(book.authors.join(', '));
+    setGenreNames(book.genres.join(', '));
+  };
+
+  const createFromPublic = async (book: GoogleBook) => {
+    await booksApi.create({
+      title: book.title,
+      year: book.year ? String(book.year) : undefined,
+      authorNames: book.authors,
+      genreNames: book.genres,
+    });
+    await loadBooks();
   };
 
   return (
@@ -126,9 +190,76 @@ export default function BooksPage() {
         </button>
       </div>
 
+      <section style={{ marginTop: 8, marginBottom: 24 }}>
+        <h2>Importer depuis Google Books</h2>
+        <div style={{ display: 'grid', gap: 8, maxWidth: 600 }}>
+          <input
+            placeholder="Chercher par titre de livre (Google Books)"
+            value={extQuery}
+            onChange={(e) => setExtQuery(e.target.value)}
+          />
+          {extLoading && <p>Recherche…</p>}
+          {!extLoading && extResults.length > 0 && (
+            <ul style={{ display: 'grid', gap: 8, listStyle: 'none', padding: 0 }}>
+              {extResults.map((bookResult) => (
+                <li
+                  key={bookResult.providerId}
+                  style={{
+                    border: '1px solid #eee',
+                    borderRadius: 8,
+                    padding: 12,
+                    display: 'grid',
+                    gridTemplateColumns: '64px 1fr auto',
+                    gap: 12,
+                    alignItems: 'center',
+                  }}
+                >
+                  {bookResult.thumbnail ? (
+                    <img
+                      src={bookResult.thumbnail}
+                      alt=""
+                      width={64}
+                      height={96}
+                      style={{ objectFit: 'cover', borderRadius: 4 }}
+                    />
+                  ) : (
+                    <div style={{ width: 64, height: 96, background: '#f3f3f3' }} />
+                  )}
+                  <div>
+                    <div style={{ fontWeight: 600 }}>
+                      {bookResult.title}
+                      {bookResult.year ? ` (${bookResult.year})` : ''}
+                    </div>
+                    <div style={{ fontSize: 13, color: '#555' }}>{bookResult.authors.join(', ')}</div>
+                    {bookResult.genres.length > 0 && (
+                      <div style={{ fontSize: 12, color: '#777' }}>{bookResult.genres.join(' • ')}</div>
+                    )}
+                  </div>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button type="button" onClick={() => importFromPublic(bookResult)}>
+                      Pré-remplir
+                    </button>
+                    <button type="button" onClick={() => createFromPublic(bookResult)}>
+                      Créer
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+          {!extLoading && extQuery && extResults.length === 0 && (
+            <p>
+              Aucun résultat Google Books pour “{extQuery}”. Utilisez le formulaire ci-dessous pour
+              créer manuellement.
+            </p>
+          )}
+        </div>
+      </section>
+
       <section style={{ marginTop: 24, marginBottom: 32 }}>
         <h2>Ajouter un livre</h2>
         <form
+          id="create-form"
           onSubmit={submitBook}
           style={{ display: 'grid', gap: 12, maxWidth: 480, marginTop: 8 }}
         >
@@ -174,6 +305,16 @@ export default function BooksPage() {
                     onChange={(e) => setEditYear(e.target.value)}
                     placeholder="Année"
                   />
+                  <input
+                    value={editAuthorNames}
+                    onChange={(e) => setEditAuthorNames(e.target.value)}
+                    placeholder="Auteurs (séparés par des virgules)"
+                  />
+                  <input
+                    value={editGenreNames}
+                    onChange={(e) => setEditGenreNames(e.target.value)}
+                    placeholder="Genres (séparés par des virgules)"
+                  />
                   <div style={{ display: 'flex', gap: 8 }}>
                     <button type="button" onClick={saveEdit}>
                       Enregistrer
@@ -188,10 +329,13 @@ export default function BooksPage() {
                   <div style={{ fontWeight: 600 }}>
                     {book.title} {book.year ? `(${book.year})` : ''}
                   </div>
+                  <div>Auteurs : {book.authors.map((a: Author) => a.name).join(', ') || '—'}</div>
                   <div>
-                    Auteurs : {book.authors.map((author: Author) => author.name).join(', ') || '—'}
+                    Genres :{' '}
+                    {book.genres
+                      .map((g) => (typeof g === 'string' ? g : (g as any).name))
+                      .join(', ') || '—'}
                   </div>
-                  <div>Genres : {book.genres.map((g) => g).join(', ') || '—'}</div>
                   <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
                     <button type="button" onClick={() => startEdit(book)}>
                       Modifier
