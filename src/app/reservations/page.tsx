@@ -26,19 +26,29 @@ export default function ReservationsPage() {
   const [editDueDate, setEditDueDate] = useState('');
 
   const [searchQueryBook, setSearchQueryBook] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
 
   const loadAll = async () => {
     setLoading(true);
-    const [booksData, reservationsData] = await Promise.all([
-      booksApi.list(),
-      reservationsApi.list(),
-    ]);
-    setBooks(booksData.data);
-    setReservations(reservationsData.data);
-    setLoading(false);
 
-    console.log('user : ', user);
-    console.log('token : ', token);
+    try {
+      const [booksData, reservationsData] = await Promise.all([
+        booksApi.list(),
+        reservationsApi.list(),
+      ]);
+
+      setBooks(booksData.data);
+      setReservations(reservationsData.data);
+      setLoading(false);
+
+      console.log('user : ', user);
+      console.log('token : ', token);
+    } catch (error) {
+      console.error('Error loading data : ', error);
+      setErrorMsg('Erreur lors du chargement des données : ' + String(error));
+      setLoading(false);
+    }
   };
 
   const filteredReservations = useMemo(() => {
@@ -57,12 +67,21 @@ export default function ReservationsPage() {
 
   const submitResa = async (e: React.FormEvent) => {
     e.preventDefault();
-    await reservationsApi.create({
-      bookId: resaBookId,
-      dueDate: resaDueDate,
-    });
-    setResaBookId('');
-    setResaDueDate('');
+    try {
+      const res = await reservationsApi.create({
+        bookId: resaBookId,
+        dueDate: resaDueDate,
+      });
+      console.log('Reservation created : ', res);
+      setSuccessMsg('Réservation créée avec succès.');
+      setResaBookId('');
+      setResaDueDate('');
+    } catch (error) {
+      console.error('Error creating reservation : ', error);
+      setErrorMsg('Erreur lors de la création de la réservation : ' + String(error));
+      return;
+    }
+
     await loadAll();
   };
 
@@ -76,14 +95,27 @@ export default function ReservationsPage() {
   };
   const saveEdit = async () => {
     if (!editId) return;
-    await reservationsApi.update(editId, { dueDate: editDueDate });
-    cancelEdit();
-    await loadAll();
+    try {
+      await reservationsApi.update(editId, { dueDate: editDueDate });
+      cancelEdit();
+      await loadAll();
+      setSuccessMsg('Réservation mise à jour avec succès.');
+    } catch (error) {
+      console.error('Error updating reservation : ', error);
+      setErrorMsg('Erreur lors de la mise à jour de la réservation : ' + String(error));
+    }
   };
   const deleteResa = async (id: string) => {
     if (!confirm('Êtes-vous certain de vouloir retourner ce livre ?')) return;
-    await reservationsApi.remove(id);
-    await loadAll();
+
+    try {
+      await reservationsApi.remove(id);
+      await loadAll();
+      setSuccessMsg('Réservation supprimée avec succès.');
+    } catch (error) {
+      console.error('Error deleting reservation : ', error);
+      setErrorMsg('Erreur lors de la suppression de la réservation : ' + String(error));
+    }
   };
 
   return (
@@ -108,7 +140,7 @@ export default function ReservationsPage() {
       </form>
 
       <section style={{ marginTop: 24, marginBottom: 32 }}>
-        <h2>Faire une réservation</h2>
+        <h2>Faire une réservation de livre</h2>
         <form onSubmit={submitResa} style={{ display: 'grid', gap: 12, maxWidth: 480 }}>
           <label style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 8 }}>
             Livre :
@@ -121,7 +153,7 @@ export default function ReservationsPage() {
             required
           >
             <option value="" disabled>
-              Choisir un livre
+              Choisir un livre parmis ceux disponibles
             </option>
             {books.map((book) => (
               <option key={book.id} value={book.id}>
@@ -142,13 +174,17 @@ export default function ReservationsPage() {
             value={resaDueDate}
             onChange={(e) => setResaDueDate(e.target.value)}
           />
-          <button type="submit">Créer</button>
+          <button type="submit">Réserver</button>
         </form>
+        <div style={{ marginTop: 8, fontSize: 12, color: '#555' }}>
+          (La date d'emprunt sera automatiquement définie au jour de la réservation)
+        </div>
+
       </section>
 
-      <h2>Liste</h2>
+      <h2>Liste des réservations en cours</h2>
       {loading ? (
-        <p>Chargement…</p>
+        <p>Chargement des réservations…</p>
       ) : (
         <ul style={{ display: 'grid', gap: 12, listStyle: 'none', padding: 0 }}>
           {filteredReservations.map((reservation) => (
@@ -194,6 +230,16 @@ export default function ReservationsPage() {
             </li>
           ))}
         </ul>
+      )}
+      {errorMsg && (
+        <div style={{ marginTop: 16, color: 'red' }}>
+          <strong>Une erreur s'est produite :</strong> {errorMsg}
+        </div>
+      )}
+      {successMsg && (
+        <div style={{ marginTop: 16, color: 'green' }}>
+          <strong>Succès :</strong> {successMsg}
+        </div>
       )}
     </main>
   );

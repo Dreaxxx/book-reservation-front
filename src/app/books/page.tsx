@@ -29,6 +29,9 @@ export default function BooksPage() {
   const [extLoading, setExtLoading] = useState(false);
   const [extResults, setExtResults] = useState<GoogleBook[]>([]);
 
+  const [errorMsg, setErrorMsg] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
+
   const [debouncedQuery] = useDebounce(extQuery, 300);
 
   const loadBooks = async (params?: { searchQuery?: string; author?: string; genre?: string }) => {
@@ -45,7 +48,11 @@ export default function BooksPage() {
         const bookRes = (await booksApi.list()).data;
         setBooks(bookRes);
       }
-    } finally {
+    } catch (error) {
+      console.error('Error loading books : ', error);
+      setErrorMsg('Erreur lors du chargement des livres : ' + String(error));
+    }
+    finally {
       setLoading(false);
     }
   };
@@ -72,23 +79,30 @@ export default function BooksPage() {
 
   const submitBook = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    await booksApi.create({
-      title,
-      year: year === '' ? undefined : year,
-      authorNames: authorNames
-        .split(',')
-        .map((s) => s.trim())
-        .filter(Boolean),
-      genreNames: genreNames
-        .split(',')
-        .map((s) => s.trim())
-        .filter(Boolean),
-    });
-    setTitle('');
-    setYear('');
-    setAuthorNames('');
-    setGenreNames('');
-    await loadBooks();
+
+    try {
+      await booksApi.create({
+        title,
+        year: year === '' ? undefined : year,
+        authorNames: authorNames
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean),
+        genreNames: genreNames
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean),
+      });
+      setTitle('');
+      setYear('');
+      setAuthorNames('');
+      setGenreNames('');
+      await loadBooks();
+      setSuccessMsg('Livre créé avec succès.');
+    } catch (error) {
+      console.error('Error creating book : ', error);
+      setErrorMsg('Erreur lors de la création du livre : ' + String(error));
+    }
   };
 
   const startEdit = (book: Book) => {
@@ -109,26 +123,40 @@ export default function BooksPage() {
 
   const saveEdit = async () => {
     if (!editId) return;
-    await booksApi.update(editId, {
-      title: editTitle,
-      year: editYear === '' ? undefined : editYear,
-      authorNames: editAuthorNames
-        .split(',')
-        .map((s) => s.trim())
-        .filter(Boolean),
-      genreNames: editGenreNames
-        .split(',')
-        .map((s) => s.trim())
-        .filter(Boolean),
-    });
-    cancelEdit();
-    await loadBooks();
+
+    try {
+      await booksApi.update(editId, {
+        title: editTitle,
+        year: editYear === '' ? undefined : editYear,
+        authorNames: editAuthorNames
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean),
+        genreNames: editGenreNames
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean),
+      });
+      cancelEdit();
+      await loadBooks();
+      setSuccessMsg('Livre mis à jour avec succès.');
+    }
+    catch (error) {
+      console.error('Error updating book : ', error);
+      setErrorMsg('Erreur lors de la mise à jour du livre : ' + String(error));
+    }
   };
 
   const deleteBook = async (id: string) => {
     if (!confirm('Supprimer ce livre ?')) return;
-    await booksApi.remove(id);
-    await loadBooks();
+
+    try {
+      await booksApi.remove(id);
+      await loadBooks();
+    } catch (error) {
+      console.error('Error deleting book : ', error);
+      setErrorMsg('Erreur lors de la suppression du livre : ' + String(error));
+    }
   };
 
   const handleSearch = async () => {
@@ -143,18 +171,24 @@ export default function BooksPage() {
   };
 
   const createFromPublic = async (book: GoogleBook) => {
-    await booksApi.create({
-      title: book.title,
-      year: book.year ? String(book.year) : undefined,
-      authorNames: book.authors,
-      genreNames: book.genres,
-    });
-    await loadBooks();
+    try {
+      await booksApi.create({
+        title: book.title,
+        year: book.year ? String(book.year) : undefined,
+        authorNames: book.authors,
+        genreNames: book.genres,
+      });
+      await loadBooks();
+      setSuccessMsg('Livre importé et créé avec succès.');
+    } catch (error) {
+      console.error('Error creating book : ', error);
+      setErrorMsg('Erreur lors de la création du livre : ' + String(error));
+    }
   };
 
   return (
     <main style={{ padding: 24, maxWidth: 860, margin: '0 auto' }}>
-      <h1>Livres</h1>
+      <h1>Les livres de notre bibliothèque :</h1>
 
       <div
         style={{
@@ -163,6 +197,7 @@ export default function BooksPage() {
           gridTemplateColumns: '1fr 1fr 1fr auto',
           maxWidth: 860,
           marginBottom: 16,
+          marginTop: 8
         }}
       >
         <input
@@ -256,7 +291,7 @@ export default function BooksPage() {
       </section>
 
       <section style={{ marginTop: 24, marginBottom: 32 }}>
-        <h2>Ajouter un livre</h2>
+        <h2>Ajouter un livre à la bibliothèque</h2>
         <form
           id="create-form"
           onSubmit={submitBook}
@@ -287,11 +322,13 @@ export default function BooksPage() {
           />
           <button type="submit">Créer</button>
         </form>
+        {errorMsg && <p style={{ color: 'red', marginTop: 16 }}>{errorMsg}</p>}
+        {successMsg && <p style={{ color: 'green', marginTop: 16 }}>{successMsg}</p>}
       </section>
 
-      <h2>Liste</h2>
+      <h2>Liste de nos livres disponibles</h2>
       {loading ? (
-        <p>Chargement…</p>
+        <p>Chargement en cours…</p>
       ) : (
         <ul style={{ display: 'grid', gap: 12, listStyle: 'none', padding: 0 }}>
           {books.map((book: Book) => (

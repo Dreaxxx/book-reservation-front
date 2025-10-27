@@ -47,10 +47,14 @@ export default function AuthPage() {
         setMode('login');
       }
     } catch (e: unknown) {
-      if (e instanceof AxiosError && e.response) {
-        const apiMessage =
-          e?.response?.data?.message || e?.response?.data?.error || e?.message || 'Erreur inconnue';
-        setErr(Array.isArray(apiMessage) ? apiMessage.join(', ') : String(apiMessage));
+      console.error('Auth error : ', e);
+      if (e instanceof AxiosError) {
+        const apiMsg = e.response?.data?.message || e.message;
+        setErr(`Erreur : ${apiMsg}`);
+      } else if (e instanceof Error) {
+        setErr(`Erreur : ${e.message}`);
+      } else {
+        setErr('Une erreur inconnue est survenue.');
       }
     } finally {
       setLoading(false);

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import type { Author } from '../lib/types';
 import { authorsApi } from '../api/api';
+import { AxiosError } from 'axios';
 
 export default function AuthorsPage() {
   const [authors, setAuthors] = useState<Author[]>([]);
@@ -13,11 +14,26 @@ export default function AuthorsPage() {
   const [editId, setEditId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
 
+  const [errorMsg, setErrorMsg] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
+
   const loadAuthors = async () => {
     setLoading(true);
-    const res = (await authorsApi.list()).data;
-    setAuthors(res);
-    setLoading(false);
+
+    try {
+      const res = (await authorsApi.list()).data;
+      setAuthors(res);
+      setLoading(false);
+    } catch (error) {
+      if (error instanceof AxiosError && error.response && error.response.data) {
+        setErrorMsg('Erreur lors du chargement des auteurs : ' + error.message);
+      } else if (error instanceof Error) {
+        setErrorMsg('Erreur lors du chargement des auteurs : ' + error.message);
+      } else {
+        setErrorMsg('Erreur lors du chargement des auteurs : ' + String(error));
+      }
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -25,10 +41,19 @@ export default function AuthorsPage() {
   }, []);
 
   const submitAuthor = async () => {
-    await authorsApi.create({ name: authorName });
-    setAuthorName('');
-    await loadAuthors();
-  };
+    if (!authorName.trim()) return;
+
+    try {
+      await authorsApi.create({ name: authorName });
+      setAuthorName('');
+      await loadAuthors();
+      setSuccessMsg('Auteur créé avec succès.');
+    } catch (error) {
+      console.error('Error creating author : ', error);
+      setErrorMsg('Erreur lors de la création de l\'auteur : ' + String(error));
+    }
+  }
+
 
   const startEdit = (author: Author) => {
     setEditId(author.id);
@@ -40,14 +65,28 @@ export default function AuthorsPage() {
   };
   const saveEdit = async () => {
     if (!editId) return;
-    await authorsApi.update(editId, { name: editName });
-    cancelEdit();
-    await loadAuthors();
+
+    try {
+      await authorsApi.update(editId, { name: editName });
+      cancelEdit();
+      await loadAuthors();
+      setSuccessMsg('Auteur mis à jour avec succès.');
+    } catch (error) {
+      console.error('Error updating author : ', error);
+      setErrorMsg('Erreur lors de la mise à jour de l\'auteur : ' + String(error));
+    }
   };
   const deleteAuthor = async (id: string) => {
     if (!confirm('Supprimer cet auteur ?')) return;
-    await authorsApi.remove(id);
-    await loadAuthors();
+
+    try {
+      await authorsApi.remove(id);
+      await loadAuthors();
+      setSuccessMsg('Auteur supprimé avec succès.');
+    } catch (error) {
+      console.error('Error deleting author : ', error);
+      setErrorMsg('Erreur lors de la suppression de l\'auteur : ' + String(error));
+    }
   };
 
   return (
@@ -108,6 +147,16 @@ export default function AuthorsPage() {
             </li>
           ))}
         </ul>
+      )}
+      {errorMsg && (
+        <div style={{ marginTop: 16, color: 'red' }}>
+          <strong>Une erreur s'est produite :</strong> {errorMsg}
+        </div>
+      )}
+      {successMsg && (
+        <div style={{ marginTop: 16, color: 'green' }}>
+          <strong>Succès :</strong> {successMsg}
+        </div>
       )}
     </main>
   );

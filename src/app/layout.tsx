@@ -5,8 +5,8 @@ import type { ReactNode } from 'react';
 import Providers from './providers';
 
 export const metadata: Metadata = {
-  title: 'Meeting Rooms — Front',
-  description: 'A simple app to manage meeting rooms and reservations.',
+  title: 'Librairie des beaux jours',
+  description: 'Application de gestion de réservation de livres pour une bibliothèque.',
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
@@ -15,7 +15,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <body suppressHydrationWarning={true}>
         <div className="container">
           <h1 className="h1" style={{ marginBottom: 24 }}>
-            Book Reservation — Front
+            Librairie des beaux jours
           </h1>
           <nav className="nav" style={{ marginBottom: 24 }}>
             <Link href="/" style={{ marginRight: 12 }}>
