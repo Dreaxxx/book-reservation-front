@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { Author, Book, GoogleBook } from '../lib/types';
 import { booksApi } from '../api/api';
 import { searchBooksByTitleGoogle } from '../api/book-public-api';
@@ -68,7 +68,6 @@ export default function BooksPage() {
       .then(setExtResults)
       .catch(() => setExtResults([]))
       .finally(() => setExtLoading(false));
-
   }, [debouncedQuery]);
 
   const submitBook = async (e?: React.FormEvent) => {
@@ -96,12 +95,8 @@ export default function BooksPage() {
     setEditId(book.id);
     setEditTitle(book.title);
     setEditYear(book.year?.toString() ?? '');
-    setEditAuthorNames(book.authors.map((a: Author) => a.name).join(', '));
-    setEditGenreNames(
-      book.genres
-        .map((g) => (typeof g === 'string' ? g : (g as any).name))
-        .join(', '),
-    );
+    setEditAuthorNames(book.authors.map((author: Author) => author.name).join(', '));
+    setEditGenreNames(book.genres.map((genre) => genre).join(', '));
   };
 
   const cancelEdit = () => {
@@ -230,9 +225,13 @@ export default function BooksPage() {
                       {bookResult.title}
                       {bookResult.year ? ` (${bookResult.year})` : ''}
                     </div>
-                    <div style={{ fontSize: 13, color: '#555' }}>{bookResult.authors.join(', ')}</div>
+                    <div style={{ fontSize: 13, color: '#555' }}>
+                      {bookResult.authors.join(', ')}
+                    </div>
                     {bookResult.genres.length > 0 && (
-                      <div style={{ fontSize: 12, color: '#777' }}>{bookResult.genres.join(' • ')}</div>
+                      <div style={{ fontSize: 12, color: '#777' }}>
+                        {bookResult.genres.join(' • ')}
+                      </div>
                     )}
                   </div>
                   <div style={{ display: 'flex', gap: 8 }}>
@@ -329,13 +328,10 @@ export default function BooksPage() {
                   <div style={{ fontWeight: 600 }}>
                     {book.title} {book.year ? `(${book.year})` : ''}
                   </div>
-                  <div>Auteurs : {book.authors.map((a: Author) => a.name).join(', ') || '—'}</div>
                   <div>
-                    Genres :{' '}
-                    {book.genres
-                      .map((g) => (typeof g === 'string' ? g : (g as any).name))
-                      .join(', ') || '—'}
+                    Auteurs : {book.authors.map((author: Author) => author.name).join(', ') || '—'}
                   </div>
+                  <div>Genres : {book.genres.map((genre) => genre).join(', ') || '—'}</div>
                   <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
                     <button type="button" onClick={() => startEdit(book)}>
                       Modifier
