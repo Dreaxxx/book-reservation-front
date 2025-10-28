@@ -312,23 +312,27 @@ export default function BooksPage() {
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             required
+            data-testid="title"
           />
           <input
             placeholder="Année (optionnel)"
             value={year}
             onChange={(e) => setYear(e.target.value)}
+            data-testid="year"
           />
           <input
             placeholder="Auteurs (séparés par des virgules)"
             value={authorNames}
             onChange={(e) => setAuthorNames(e.target.value)}
             required
+            data-testid="authors"
           />
           <input
             placeholder="Genres (séparés par des virgules)"
             value={genreNames}
             onChange={(e) => setGenreNames(e.target.value)}
             required
+            data-testid="genres"
           />
           <button type="submit">Créer</button>
         </form>

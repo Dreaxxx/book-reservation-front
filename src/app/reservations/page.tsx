@@ -227,10 +227,18 @@ export default function ReservationsPage() {
                   <div>Personne : {reservation.reservedBy?.name ?? '—'}</div>
                   {reservation.reservedBy?.id === user?.id && (
                     <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-                      <button type="button" onClick={() => startEdit(reservation)}>
+                      <button
+                        data-testid="editBook"
+                        type="button"
+                        onClick={() => startEdit(reservation)}
+                      >
                         Changer la date de retour
                       </button>
-                      <button type="button" onClick={() => deleteResa(reservation.id)}>
+                      <button
+                        data-testid="removeBook"
+                        type="button"
+                        onClick={() => deleteResa(reservation.id)}
+                      >
                         Retourner le livre
                       </button>
                     </div>
