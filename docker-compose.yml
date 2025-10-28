@@ -1,0 +1,10 @@
+services:
+   frontend:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    container_name: app_web
+    env_file:
+      - ./frontend/.env.docker.local
+    ports:
+      - "3000:3000"
