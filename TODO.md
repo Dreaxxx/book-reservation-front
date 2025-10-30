@@ -23,3 +23,7 @@
 -> CI/CD de déploiement et execution des tests et du linter
 
 -> Ajout de style pour l'app (tailwind + material ?)
+
+## Si vous lisez ceci : 
+
+Il n'existe pas de commande prisma finalement pour revert une migration, il faut ou le faire manuellement ou à la limite créé un script de diff.
